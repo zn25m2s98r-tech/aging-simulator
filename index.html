@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The 2060 Problem</title>
+<style>
+/* Layout: sticky challenge strip; controls column beside stacked output panels; one column on phones. House style: Utah red, oxblood rules, cream boxes, Georgia + Courier. */
+:root {
+  --paper: #F6F1E7;
+  --card: #FBF8F2;
+  --ink: #2A1F1A;
+  --muted: #6E625A;
+  --rule: #7C1420;
+  --red: #CC0000;
+  --cream: #E5DFD5;
+  --young: #B9AD9F;
+  --working: #5B4E46;
+  --good: #2E6B3A;
+  --good-bg: #E3EEE2;
+  --bad-bg: #F6DEDB;
+  --grid: #E5DFD5;
+  --serif: Georgia, "Times New Roman", Times, serif;
+  --mono: "Courier New", Courier, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1B1614; --card: #241D1A; --ink: #EDE5DA; --muted: #A99C90; --rule: #C25560;
+    --red: #FF5A4E; --cream: #3A302B; --young: #6F655C; --working: #CFC4B7; --good: #7FC98D;
+    --good-bg: #1F3323; --bad-bg: #3A1F1C; --grid: #342B27; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1B1614; --card: #241D1A; --ink: #EDE5DA; --muted: #A99C90; --rule: #C25560;
+  --red: #FF5A4E; --cream: #3A302B; --young: #6F655C; --working: #CFC4B7; --good: #7FC98D;
+  --good-bg: #1F3323; --bad-bg: #3A1F1C; --grid: #342B27; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 16px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rule); }
+header.mast { padding-block: 28px 18px; border-bottom: 1px solid var(--rule); }
+header.mast h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.1; margin: 6px 0 10px; font-weight: 700; text-wrap: balance; }
+header.mast p { max-width: 68ch; margin: 0; color: var(--muted); }
+
+.challenge { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--cream); }
+.challenge .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-block: 10px; }
+.challenge .task { flex: 1 1 320px; min-width: 0; font-size: 15px; }
+.challenge .task b { font-weight: 700; }
+.score { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.score .big { font-size: 22px; font-weight: 700; }
+.pill { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 9px; border-radius: 3px; border: 1px solid currentColor; }
+.pill.ok { color: var(--good); background: var(--good-bg); }
+.pill.no { color: var(--red); background: var(--bad-bg); }
+
+.yearwrap { padding-block: 20px 0; }
+.layout { display: grid; grid-template-columns: 1fr; gap: 24px; padding-block: 24px 40px; }
+@media (min-width: 920px) {
+  .layout { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+  .controls { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); max-height: calc(100vh - 90px); overflow-y: auto; }
+}
+.controls { display: grid; gap: 20px; }
+.group { border: 1px solid var(--cream); background: var(--card); padding: 14px 16px 16px; display: grid; gap: 14px; }
+.group h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.group .eyebrow { margin-bottom: -10px; }
+.ctl { display: grid; gap: 4px; }
+.ctl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ctl label { font-size: 15px; }
+.ctl output { font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ctl input[type=range] { width: 100%; accent-color: var(--red); margin: 2px 0; }
+.ctl .hint { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.ctl.changed output { color: var(--red); }
+input[type=range]:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+button.reset { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--card); background: var(--rule); border: 1px solid var(--rule); padding: 7px 14px; border-radius: 3px; cursor: pointer; }
+button.reset:hover:not(:disabled) { background: var(--red); border-color: var(--red); }
+button.reset:disabled { color: var(--muted); background: transparent; border-color: var(--cream); cursor: default; }
+button.chip { font-family: var(--serif); font-size: 14px; color: var(--ink); background: var(--paper); border: 1px solid var(--cream); padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+button.chip:hover { border-color: var(--rule); }
+button.chip[aria-pressed="true"] { border-color: var(--red); color: var(--red); }
+
+.outputs { display: grid; gap: 24px; min-width: 0; }
+.yearbar { display: grid; gap: 10px; border: 1px solid var(--cream); background: var(--card); padding: 14px 16px; }
+.yearbar .ctl-head label { font-size: 18px; font-weight: 700; }
+.yearbar .ctl output { font-size: 18px; }
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.readout { border-left: 3px solid var(--cream); padding-left: 10px; min-width: 0; }
+.readout .eyebrow { color: var(--muted); font-size: 11px; }
+.readout .v { font-family: var(--mono); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.readout .d { font-size: 12px; color: var(--muted); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.readout.old { border-left-color: var(--red); }
+
+.panel { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 8px; min-width: 0; }
+.panel h2 { margin: 2px 0 0; font-size: 22px; line-height: 1.2; text-wrap: balance; }
+.panel .watch { margin: 0; color: var(--muted); font-size: 15px; max-width: 70ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 18px; height: 3px; }
+.legend i.box { width: 12px; height: 12px; }
+.legend b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.chart { width: 100%; overflow-x: auto; }
+.chart svg { display: block; width: 100%; height: auto; min-width: 320px; }
+.chart text { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+
+details.notes { border: 1px solid var(--cream); background: var(--card); padding: 12px 16px; }
+details.notes summary { cursor: pointer; font-weight: 700; }
+details.notes ul { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; max-width: 75ch; }
+footer { border-top: 1px solid var(--rule); padding-block: 12px 28px; font-size: 13px; color: var(--muted); }
+@media (max-width: 520px) {
+  .challenge .task { font-size: 14px; }
+  .score .big { font-size: 19px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .readout .v { transition: color .2s; }
+}
+</style>
+<style>html{color-scheme:light}body{margin:0}</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="eyebrow">SOC 3650 · Population &amp; Society · In-class simulation</div>
+    <h1>The 2060 Problem</h1>
+    <p>In this simulation, you get to live out every policy wonk's dream. You get a population, in this case one shaped like the United States in 2025, and the power to make whatever changes you think it needs to look after its aging members. You can change how many children people have, how long they live, and how many people move in. You can also change the rules: when pensions start, how many older people keep working, and how generous the pension is. The only catch is that the payroll tax needed to fund pensions in 2060 has to stay at 15 percent or less. Record your choices on the accompanying worksheet.</p>
+  </div>
+</header>
+
+<section class="challenge" aria-live="polite">
+  <div class="wrap">
+    <div class="task"><span class="eyebrow">Your task</span><br>Keep the payroll tax needed to fund pensions at or below <b>15% in 2060</b>.</div>
+    <div class="score"><span class="eyebrow" style="color:var(--muted)">2060</span><span class="big" id="score-rate">–</span><span class="pill" id="score-pill">–</span></div>
+    <button type="button" class="reset" id="reset" disabled>Reset</button>
+  </div>
+</section>
+
+<div class="wrap yearwrap">
+  <div class="yearbar">
+    <div class="ctl" data-key="year">
+      <div class="ctl-head"><label for="year">Year</label><output id="year-out" for="year"></output></div>
+      <input type="range" id="year" min="2025" max="2100" step="5" value="2060">
+    </div>
+    <div class="readouts" id="readouts"></div>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <aside class="controls" aria-label="Simulation controls">
+    <div class="group">
+      <div class="eyebrow">Demography · reached by 2050</div>
+      <h2>Births, deaths, arrivals</h2>
+      <div class="ctl" data-key="tfr">
+        <div class="ctl-head"><label for="tfr">Total fertility rate</label><output id="tfr-out" for="tfr"></output></div>
+        <input type="range" id="tfr" min="0.8" max="3.0" step="0.05" value="1.6">
+        <div class="hint">Children per woman. U.S. today: about 1.6.</div>
+      </div>
+      <div class="ctl" data-key="e0">
+        <div class="ctl-head"><label for="e0">Life expectancy at birth</label><output id="e0-out" for="e0"></output></div>
+        <input type="range" id="e0" min="72" max="95" step="0.5" value="81">
+        <div class="hint">Years. U.S. today: about 79.</div>
+      </div>
+      <div class="ctl" data-key="mig">
+        <div class="ctl-head"><label for="mig">Net migration per year</label><output id="mig-out" for="mig"></output></div>
+        <input type="range" id="mig" min="0" max="3" step="0.1" value="1.0">
+        <div class="hint">Arrivals minus departures, millions. Mostly people in their 20s and early 30s.</div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="eyebrow">Policy · starts now</div>
+      <h2>The rules</h2>
+      <div class="ctl" data-key="R">
+        <div class="ctl-head"><label for="R">Pension eligibility age</label><output id="R-out" for="R"></output></div>
+        <input type="range" id="R" min="62" max="72" step="1" value="67">
+        <div class="hint">Everyone this age and older collects. U.S. full retirement age: 67.</div>
+      </div>
+      <div class="ctl" data-key="older">
+        <div class="ctl-head"><label for="older">Work at ages 55 and up</label><output id="older-out" for="older"></output></div>
+        <input type="range" id="older" min="0.7" max="1.5" step="0.05" value="1">
+        <div class="hint">Labor force participation of older adults, relative to today.</div>
+      </div>
+      <div class="ctl" data-key="repl">
+        <div class="ctl-head"><label for="repl">Pension size</label><output id="repl-out" for="repl"></output></div>
+        <input type="range" id="repl" min="0.2" max="0.6" step="0.01" value="0.4">
+        <div class="hint">Benefit as a share of the average worker's wage.</div>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="eyebrow">Scenarios</div>
+      <div class="presets" id="presets"></div>
+    </div>
+  </aside>
+
+  <main class="outputs">
+
+    <section class="panel">
+      <div class="eyebrow">Panel 1 · Age structure</div>
+      <h2>Who is alive</h2>
+      <p class="watch">Bars show each five-year age group. The outline is 2025, so you can see what moved.</p>
+      <div class="legend">
+        <span><i class="box" style="background:var(--young)"></i>Under 20</span>
+        <span><i class="box" style="background:var(--working)"></i>20 to 64</span>
+        <span><i class="box" style="background:var(--red)"></i>65 and older</span>
+        <span><i style="background:var(--ink);height:2px"></i>2025 outline</span>
+      </div>
+      <div class="chart" id="pyramid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Panel 2 · Dependency</div>
+      <h2>How many people each worker supports</h2>
+      <p class="watch">The two ratios are fixed by age alone. The red line counts actual pensioners per 100 actual workers, so it is the only one that responds to policy.</p>
+      <div class="legend" id="leg-dep"></div>
+      <div class="chart" id="chart-dep"></div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Panel 3 · Pensions</div>
+      <h2>The payroll tax a pay-as-you-go pension needs</h2>
+      <p class="watch">Today's workers pay for today's retirees. Required tax = pension size × pensioners ÷ workers.</p>
+      <div class="legend" id="leg-pen"></div>
+      <div class="chart" id="chart-pen"></div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Panel 4 · Health care</div>
+      <h2>Health spending per person, from age structure alone</h2>
+      <p class="watch">Index, 2025 = 100. Prices and medical technology are held fixed, so every change here comes from who is in the population.</p>
+      <div class="legend" id="leg-hlth"></div>
+      <div class="chart" id="chart-hlth"></div>
+    </section>
+
+    <details class="notes">
+      <summary>What the model assumes (and leaves out)</summary>
+      <ul>
+        <li>The starting population is rounded and U.S.-shaped, about 337 million people in 2025. Treat it as a teaching population, not an official estimate.</li>
+        <li>Fertility and life expectancy move in a straight line from today's values to your settings by 2050, then stay put. Policy changes take effect immediately, with no phase-in.</li>
+        <li>Mortality comes from a single age pattern scaled up or down to hit your life expectancy. Men and women share one schedule.</li>
+        <li>Births come from women aged 15 to 49 (49% of that age group), using a fixed age pattern of childbearing. Migrants arrive with a fixed age profile concentrated at ages 20 to 34 and then age, have children, and die like everyone else.</li>
+        <li>Workers are people 15 and older times a participation rate for their age group, rounded from recent U.S. figures. Raising the eligibility age above 67 keeps people in the workforce at the rate of 60 to 64 year olds; lowering it pulls them out at the rate of 65 to 69 year olds.</li>
+        <li>The pension is stylized: one flat benefit, pay-as-you-go, no trust fund, no disability benefits, no wage growth. Real U.S. Social Security is more complicated, which is not the same as being better funded.</li>
+        <li>Relative health costs by age are rounded, illustrative values. People 85 and older are assumed to cost about four times as much as the average young adult.</li>
+        <li>Nothing feeds back. Wages, productivity, automation, and whether anyone actually wants to have 2.6 children are outside the model.</li>
+      </ul>
+    </details>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">SOC 3650 · Population &amp; Society · University of Utah · Cohort-component projection, five-year steps, 2025–2100</div>
+</footer>
+<script>
+/*MODEL-START*/
+const GROUPS = 21;
+const AGE_LABELS = Array.from({length: 20}, (_, i) => `${5 * i}–${5 * i + 4}`).concat(['100+']);
+// Starting population, millions, both sexes. Rounded, U.S.-shaped, circa 2025.
+const P2025 = [18.9, 19.6, 21.0, 22.1, 22.0, 22.2, 23.0, 22.8, 22.0, 20.4, 20.6, 20.8, 21.4, 18.9, 15.8, 11.6, 7.4, 4.3, 1.9, 0.6, 0.1];
+const TFR_NOW = 1.6, E0_NOW = 79.0;
+const ASFR_SHARE = {3: 0.06, 4: 0.20, 5: 0.28, 6: 0.27, 7: 0.15, 8: 0.035, 9: 0.005};
+const MIG_SHARE = [.05, .05, .05, .08, .17, .19, .15, .10, .06, .04, .03, .02, .01, 0, 0, 0, 0, 0, 0, 0, 0];
+const LFP = [0, 0, 0, .30, .71, .83, .83, .83, .83, .82, .79, .72, .57, .33, .19, .08, .04, .02, .01, 0, 0];
+const HEALTH = [0.9, 0.5, 0.5, 0.5, 0.7, 0.7, 0.7, 0.7, 0.7, 1.1, 1.1, 1.5, 1.5, 2.2, 2.2, 3.0, 3.0, 4.0, 4.0, 4.0, 4.0];
+const FEMALE_SHARE = 0.49;
+const YEARS = Array.from({length: 16}, (_, i) => 2025 + 5 * i);
+
+function hazard(x, k) {
+  return k * (0.0004 + 0.00003 * Math.exp(0.09 * x) + 0.03 * Math.exp(-6 * x));
+}
+function lifeTable(k) {
+  const h = 0.05, L = new Array(20).fill(0);
+  let l = 1, T95 = 0, T100 = 0, T105 = 0, e0 = 0;
+  for (let n = 0; n < 2600 && l > 1e-10; n++) {
+    const x = n * h;
+    const lNext = l * Math.exp(-hazard(x + h / 2, k) * h);
+    const py = h * (l + lNext) / 2;
+    e0 += py;
+    const g = Math.floor(n / 100);
+    if (g < 20) L[g] += py;
+    if (n >= 1900) T95 += py;
+    if (n >= 2000) T100 += py;
+    if (n >= 2100) T105 += py;
+    l = lNext;
+  }
+  return {L, T95, T100, T105, e0};
+}
+const LT_CACHE = new Map();
+function getLT(e0) {
+  const key = e0.toFixed(2);
+  if (LT_CACHE.has(key)) return LT_CACHE.get(key);
+  let lo = -12, hi = 4, lt;
+  for (let it = 0; it < 40; it++) {
+    const mid = (lo + hi) / 2;
+    lt = lifeTable(Math.exp(mid));
+    if (lt.e0 > e0) lo = mid; else hi = mid;
+  }
+  LT_CACHE.set(key, lt);
+  return lt;
+}
+function healthPC(P) {
+  let s = 0, n = 0;
+  for (let i = 0; i < GROUPS; i++) { s += P[i] * HEALTH[i]; n += P[i]; }
+  return s / n;
+}
+function participation(x, i, p) {
+  let r = LFP[i];
+  if (x >= 55) r *= p.older;
+  if (x >= 67 && x < p.R) r = Math.max(r, LFP[12] * p.older);
+  if (x >= p.R && x < 67) r = Math.min(r, LFP[13] * p.older);
+  return Math.min(r, 0.95);
+}
+function indicators(P, p, h0) {
+  const sum = (a, b) => { let s = 0; for (let i = a; i <= b; i++) s += P[i]; return s; };
+  const pop = sum(0, 20), p65 = sum(13, 20), p2064 = sum(4, 12), p019 = sum(0, 3);
+  let workers = 0, ben = 0;
+  for (let i = 0; i < GROUPS; i++) {
+    for (let j = 0; j < 5; j++) {
+      const x = 5 * i + j, n = P[i] / 5;
+      workers += n * participation(x, i, p);
+      if (x >= p.R) ben += n;
+    }
+  }
+  let cum = 0, median = 0;
+  for (let i = 0; i < GROUPS; i++) {
+    if (cum + P[i] >= pop / 2) { median = 5 * i + 5 * (pop / 2 - cum) / P[i]; break; }
+    cum += P[i];
+  }
+  return {
+    pop, median, share65: p65 / pop * 100,
+    oadr: p65 / p2064 * 100, tdr: (p019 + p65) / p2064 * 100,
+    workers, ben, bpw: ben / workers * 100,
+    rate: p.repl * ben / workers * 100,
+    health: healthPC(P) / h0 * 100
+  };
+}
+function project(p) {
+  let P = P2025.slice();
+  const out = [{year: 2025, P: P.slice()}];
+  for (let s = 0; s < 15; s++) {
+    const t = 2025 + 5 * s;
+    const frac = Math.min(1, (t + 2.5 - 2025) / 25);
+    const e = E0_NOW + (p.e0 - E0_NOW) * frac;
+    const tfr = TFR_NOW + (p.tfr - TFR_NOW) * frac;
+    const lt = getLT(e);
+    const N = new Array(GROUPS).fill(0);
+    for (let i = 0; i < 19; i++) N[i + 1] = P[i] * lt.L[i + 1] / lt.L[i];
+    N[20] = (P[19] + P[20]) * lt.T105 / lt.T95;
+    let B = 0;
+    for (const k in ASFR_SHARE) {
+      const i = +k, f = tfr * ASFR_SHARE[k] / 5;
+      B += 5 * f * FEMALE_SHARE * (P[i] + N[i]) / 2;
+    }
+    N[0] = B * lt.L[0] / 5;
+    for (let i = 0; i < GROUPS; i++) N[i] += 5 * p.mig * MIG_SHARE[i];
+    P = N;
+    out.push({year: t + 5, P: P.slice()});
+  }
+  const h0 = healthPC(P2025);
+  return out.map(o => Object.assign(o, indicators(o.P, p, h0)));
+}
+/*MODEL-END*/
+const DEFAULTS = {tfr: 1.6, e0: 81, mig: 1.0, R: 67, older: 1, repl: 0.4};
+const TARGET = 15, TARGET_YEAR = 2060;
+const PRESETS = [
+  ['Current path', {}],
+  ['Baby boom', {tfr: 2.6}],
+  ['Closed border', {mig: 0}],
+  ['Open door', {mig: 3}],
+  ['Long lives', {e0: 92}],
+  ['Work longer', {R: 70, older: 1.2}],
+  ['Japan-style', {tfr: 1.2, e0: 88, mig: 0.1}]
+];
+const FMT = {
+  tfr: v => v.toFixed(2),
+  e0: v => v.toFixed(1) + ' yrs',
+  mig: v => v.toFixed(1) + ' M',
+  R: v => String(v),
+  older: v => Math.round(v * 100) + '%',
+  repl: v => Math.round(v * 100) + '%',
+  year: v => String(v)
+};
+const KEYS = Object.keys(DEFAULTS);
+const $ = id => document.getElementById(id);
+const baseline = project(DEFAULTS);
+const P2025MAX = Math.max(...P2025);
+let state = Object.assign({}, DEFAULTS);
+let year = 2060, results = baseline;
+
+function readInputs() {
+  for (const k of KEYS) state[k] = parseFloat($(k).value);
+  year = parseInt($('year').value, 10);
+}
+function syncOutputs() {
+  for (const k of KEYS) {
+    $(k + '-out').textContent = FMT[k](state[k]);
+    $(k).closest('.ctl').classList.toggle('changed', Math.abs(state[k] - DEFAULTS[k]) > 1e-9);
+  }
+  $('year-out').textContent = year;
+  $('reset').disabled = year === 2060 && KEYS.every(k => Math.abs(state[k] - DEFAULTS[k]) < 1e-9);
+  const btns = document.querySelectorAll('#presets button');
+  PRESETS.forEach(([, p], i) => {
+    const target = Object.assign({}, DEFAULTS, p);
+    btns[i].setAttribute('aria-pressed', KEYS.every(k => Math.abs(target[k] - state[k]) < 1e-9) ? 'true' : 'false');
+  });
+}
+
+function niceStep(range) {
+  const raw = range / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * mag >= raw) return m * mag;
+  return 10 * mag;
+}
+function lineChart(box, opts) {
+  const W = 640, H = 250, m = {l: 44, r: 14, t: 12, b: 28};
+  const all = [];
+  opts.series.forEach(s => all.push(...s.values));
+  if (opts.threshold != null) all.push(opts.threshold);
+  let lo = opts.zero ? 0 : Math.min(...all), hi = Math.max(...all);
+  const step = niceStep((hi - lo) || 1);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  if (!opts.zero && lo === Math.min(...all)) lo -= step;
+  const x = y => m.l + (y - 2025) / 75 * (W - m.l - m.r);
+  const yv = v => m.t + (1 - (v - lo) / (hi - lo)) * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label}">`;
+  for (let v = lo; v <= hi + 1e-9; v += step) {
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${yv(v)}" y2="${yv(v)}" stroke="var(--grid)" stroke-width="1"/>`;
+    s += `<text x="${m.l - 6}" y="${yv(v) + 4}" text-anchor="end">${opts.fmt(v)}</text>`;
+  }
+  for (const yr of [2025, 2050, 2075, 2100]) {
+    s += `<text x="${x(yr)}" y="${H - 8}" text-anchor="${yr === 2025 ? 'start' : yr === 2100 ? 'end' : 'middle'}">${yr}</text>`;
+  }
+  if (opts.threshold != null) {
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${yv(opts.threshold)}" y2="${yv(opts.threshold)}" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="2 4"/>`;
+    s += `<text x="${W - m.r}" y="${yv(opts.threshold) - 6}" text-anchor="end" style="fill:var(--red)">${opts.thresholdLabel}</text>`;
+  }
+  s += `<line x1="${x(year)}" x2="${x(year)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  opts.series.forEach(se => {
+    const d = se.values.map((v, i) => `${i ? 'L' : 'M'}${x(YEARS[i]).toFixed(1)},${yv(v).toFixed(1)}`).join('');
+    s += `<path d="${d}" fill="none" stroke="${se.color}" stroke-width="${se.ghost ? 1.5 : 2.5}" ${se.dash ? `stroke-dasharray="${se.dash}"` : ''} stroke-linejoin="round" stroke-linecap="round" ${se.ghost ? 'opacity="0.55"' : ''}/>`;
+    if (!se.ghost) {
+      const i = YEARS.indexOf(year);
+      s += `<circle cx="${x(year)}" cy="${yv(se.values[i])}" r="4" fill="${se.color}" stroke="var(--paper)" stroke-width="1.5"/>`;
+    }
+  });
+  box.innerHTML = s + '</svg>';
+}
+function legend(box, items) {
+  box.innerHTML = items.map(it =>
+    `<span><i style="background:${it.color};${it.ghost ? 'opacity:.55;' : ''}"></i>${it.name}${it.value != null ? ` <b>${it.value}</b>` : ''}</span>`).join('');
+}
+
+function pyramid(box, P) {
+  const W = 640, row = 14, top = 6, labW = 52, H = top + row * GROUPS + 30;
+  const max = Math.max(P2025MAX, ...results.map(r => Math.max(...r.P)));
+  const cx = labW + (W - labW - 8) / 2, half = (W - labW - 8) / 2 - 2;
+  const w = v => v / max * half * 2;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Population by age group in ${year}">`;
+  for (let i = 0; i < GROUPS; i++) {
+    const y = top + (GROUPS - 1 - i) * row;
+    const col = i < 4 ? 'var(--young)' : i < 13 ? 'var(--working)' : 'var(--red)';
+    const bw = w(P[i]);
+    s += `<rect x="${cx - bw / 2}" y="${y + 1.5}" width="${bw}" height="${row - 3}" fill="${col}"/>`;
+    if (i % 2 === 0) s += `<text x="${labW - 8}" y="${y + row - 3}" text-anchor="end">${AGE_LABELS[i]}</text>`;
+  }
+  let L = '', R = '';
+  for (let i = GROUPS - 1; i >= 0; i--) {
+    const y0 = top + (GROUPS - 1 - i) * row, y1 = y0 + row, bw = w(P2025[i]) / 2;
+    L += `${L ? 'L' : 'M'}${(cx - bw).toFixed(1)},${y0}L${(cx - bw).toFixed(1)},${y1}`;
+    R += `${R ? 'L' : 'M'}${(cx + bw).toFixed(1)},${y0}L${(cx + bw).toFixed(1)},${y1}`;
+  }
+  s += `<path d="${L}" fill="none" stroke="var(--ink)" stroke-width="1.5"/><path d="${R}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+  const sy = top + row * GROUPS + 14, sb = w(10);
+  s += `<line x1="${W - 8 - sb}" x2="${W - 8}" y1="${sy}" y2="${sy}" stroke="var(--ink)" stroke-width="2"/>`;
+  s += `<text x="${W - 14 - sb}" y="${sy + 4}" text-anchor="end">10 million people</text>`;
+  s += `<text x="${labW}" y="${sy + 4}">Ages, oldest at top</text>`;
+  box.innerHTML = s + '</svg>';
+}
+
+function readouts(r, r0) {
+  const items = [
+    ['Population', r.pop.toFixed(0) + ' M', r.pop - r0.pop, v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(0) + ' M', ''],
+    ['Aged 65+', r.share65.toFixed(1) + '%', r.share65 - r0.share65, v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1) + ' pts', 'old'],
+    ['Median age', r.median.toFixed(1), r.median - r0.median, v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1) + ' yrs', ''],
+    ['Workers', r.workers.toFixed(0) + ' M', r.workers - r0.workers, v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(0) + ' M', '']
+  ];
+  $('readouts').innerHTML = items.map(([k, v, d, f, cls]) =>
+    `<div class="readout ${cls}"><div class="eyebrow">${k}</div><div class="v">${v}</div><div class="d">${year === 2025 ? 'starting point' : f(d) + ' vs. 2025'}</div></div>`).join('');
+}
+
+function render() {
+  readInputs();
+  results = project(state);
+  syncOutputs();
+  const i = YEARS.indexOf(year), r = results[i], col = k => results.map(o => o[k]), b = k => baseline.map(o => o[k]);
+  readouts(r, results[0]);
+  pyramid($('pyramid'), r.P);
+
+  lineChart($('chart-dep'), {
+    label: 'Dependency ratios over time', zero: true, fmt: v => v.toFixed(0),
+    series: [
+      {values: col('tdr'), color: 'var(--young)'},
+      {values: col('oadr'), color: 'var(--working)', dash: '6 4'},
+      {values: col('bpw'), color: 'var(--red)'}
+    ]
+  });
+  legend($('leg-dep'), [
+    {name: 'Under 20 and 65+, per 100 aged 20–64', color: 'var(--young)', value: r.tdr.toFixed(0)},
+    {name: '65+ per 100 aged 20–64', color: 'var(--working)', value: r.oadr.toFixed(0)},
+    {name: 'Pensioners per 100 workers', color: 'var(--red)', value: r.bpw.toFixed(0)}
+  ]);
+
+  lineChart($('chart-pen'), {
+    label: 'Required payroll tax over time', zero: true, fmt: v => v + '%',
+    threshold: TARGET, thresholdLabel: 'Target 15%',
+    series: [
+      {values: b('rate'), color: 'var(--muted)', ghost: true, dash: '4 4'},
+      {values: col('rate'), color: 'var(--rule)'}
+    ]
+  });
+  legend($('leg-pen'), [
+    {name: 'Your settings', color: 'var(--rule)', value: r.rate.toFixed(1) + '%'},
+    {name: 'Current path', color: 'var(--muted)', ghost: true, value: baseline[i].rate.toFixed(1) + '%'}
+  ]);
+
+  lineChart($('chart-hlth'), {
+    label: 'Health spending per person index over time', zero: false, fmt: v => v.toFixed(0),
+    series: [
+      {values: b('health'), color: 'var(--muted)', ghost: true, dash: '4 4'},
+      {values: col('health'), color: 'var(--rule)'}
+    ]
+  });
+  legend($('leg-hlth'), [
+    {name: 'Your settings', color: 'var(--rule)', value: r.health.toFixed(0)},
+    {name: 'Current path', color: 'var(--muted)', ghost: true, value: baseline[i].health.toFixed(0)}
+  ]);
+
+  const t = results[YEARS.indexOf(TARGET_YEAR)].rate, ok = t <= TARGET;
+  $('score-rate').textContent = t.toFixed(1) + '%';
+  const pill = $('score-pill');
+  pill.textContent = ok ? 'On target' : 'Over target';
+  pill.className = 'pill ' + (ok ? 'ok' : 'no');
+}
+
+$('presets').innerHTML = PRESETS.map(([name]) => `<button type="button" class="chip">${name}</button>`).join('');
+document.querySelectorAll('#presets button').forEach((btn, i) => btn.addEventListener('click', () => {
+  const p = Object.assign({}, DEFAULTS, PRESETS[i][1]);
+  for (const k of KEYS) $(k).value = p[k];
+  render();
+}));
+$('reset').addEventListener('click', () => {
+  for (const k of KEYS) $(k).value = DEFAULTS[k];
+  $('year').value = 2060;
+  render();
+});
+let pending = false;
+document.querySelectorAll('input[type=range]').forEach(el => el.addEventListener('input', () => {
+  if (pending) return;
+  pending = true;
+  requestAnimationFrame(() => { pending = false; render(); });
+}));
+render();
+</script>
+</body>
+</html>
